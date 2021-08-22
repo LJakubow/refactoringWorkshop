@@ -213,13 +213,21 @@ Controller::Segment Controller::getNewHead() const
     return newHead;
 }
 
+
 void Controller::receive(std::unique_ptr<Event> e)
 {
     try {
-        handleTimePassed(*dynamic_cast<EventT<TimeoutInd> const&>(*e));
+        if(e->getMessageId()==0x20){
+            auto cast =TimeoutInd payload(&e);
+            handleTimePassed(cast);
+        }
+
     } catch (std::bad_cast&) {
         try {
-            handleDirectionChange(*dynamic_cast<EventT<DirectionInd> const&>(*e));
+            if(e->getMessageId()==0x10){
+                auto cast =DirectionInd payload(&e);
+            handleDirectionChange(&e);
+            }
         } catch (std::bad_cast&) {
             try {
                 handleFoodPositionChange(*dynamic_cast<EventT<FoodInd> const&>(*e));

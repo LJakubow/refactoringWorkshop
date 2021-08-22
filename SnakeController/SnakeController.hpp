@@ -29,7 +29,7 @@ public:
 
     Controller(Controller const& p_rhs) = delete;
     Controller& operator=(Controller const& p_rhs) = delete;
-
+    void cast(std::unique_ptr<Event> e);
     void receive(std::unique_ptr<Event> e) override;
 
 private:
