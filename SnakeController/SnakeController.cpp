@@ -15,6 +15,22 @@ ConfigurationError::ConfigurationError()
 UnexpectedEventException::UnexpectedEventException()
     : std::runtime_error("Unexpected event received!")
 {}
+class World:public Controller
+{
+public:
+    World();
+    bool isSegmentAtPosition2(int x,int y,Controller controler);
+    bool isPositionOutsideMap2(int x,int y,Controller controler);
+private:
+    struct Segment
+    {
+        int x;
+        int y;
+    };
+std::pair<int, int> mapDim;
+
+
+};
 
 Controller::Controller(IPort& p_displayPort, IPort& p_foodPort, IPort& p_scorePort, std::string const& p_config)
     : m_displayPort(p_displayPort),
@@ -28,6 +44,7 @@ Controller::Controller(IPort& p_displayPort, IPort& p_foodPort, IPort& p_scorePo
     int width, height, length;
     int foodX, foodY;
     istr >> w >> width >> height >> f >> foodX >> foodY >> s;
+
 
     if (w == 'W' and f == 'F' and s == 'S') {
         m_mapDimension = std::make_pair(width, height);
@@ -75,6 +92,7 @@ bool Controller::isPositionOutsideMap(int x, int y) const
 
 void Controller::sendPlaceNewFood(int x, int y)
 {
+
     m_foodPosition = std::make_pair(x, y);
 
     DisplayInd placeNewFood;
@@ -118,6 +136,12 @@ bool perpendicular(Direction dir1, Direction dir2)
     return isHorizontal(dir1) == isVertical(dir2);
 }
 } // namespace
+bool World::isSegmentAtPosition2(int x, int y,Controller controler)
+{
+    std::list<Segment> list= controler.getM_segments();
+    return list.end() !=  std::find_if(list.cbegin(), list.cend(),
+        [x, y](auto const& segment){ return segment.x == x and segment.y == y; });
+}
 
 Controller::Segment Controller::calculateNewHead() const
 {
@@ -191,8 +215,11 @@ void Controller::handleDirectionInd(std::unique_ptr<Event> e)
 
 void Controller::updateFoodPosition(int x, int y, std::function<void()> clearPolicy)
 {
-    if (isSegmentAtPosition(x, y)) {
+    World world;
+
+    if (World::isPositionOutsideMap2(x,y,) or isPositionOutsideMap(x,y)) {
         m_foodPort.send(std::make_unique<EventT<FoodReq>>());
+
         return;
     }
 
@@ -209,6 +236,7 @@ void Controller::handleFoodInd(std::unique_ptr<Event> e)
 
 void Controller::handleFoodResp(std::unique_ptr<Event> e)
 {
+
     auto requestedFood = payload<FoodResp>(*e);
 
     updateFoodPosition(requestedFood.x, requestedFood.y, []{});
@@ -242,5 +270,14 @@ void Controller::receive(std::unique_ptr<Event> e)
             throw UnexpectedEventException();
     }
 }
+
+
+
+bool World::isPositionOutsideMap(int x, int y) const
+{
+    return x < 0 or y < 0 or x >= m_mapDimension.first or y >= m_mapDimension.second;
+}
+
+
 
 } // namespace Snake

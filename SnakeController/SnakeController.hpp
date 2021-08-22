@@ -32,7 +32,12 @@ public:
     Controller& operator=(Controller const& p_rhs) = delete;
 
     void receive(std::unique_ptr<Event> e) override;
-
+    std::list<Segment> getM_segments()
+    {
+        return m_segments;
+    }
+    std::pair<int, int> getMapDimension()
+    {return m_mapDimension;}
 private:
     IPort& m_displayPort;
     IPort& m_foodPort;
